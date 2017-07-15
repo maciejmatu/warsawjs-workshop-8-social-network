@@ -3,6 +3,11 @@
 const firebase = require('firebase');
 const esdf = require('esdf');
 
+const handleDBError = (err) => {
+	console.log('\x1b[31m', err);
+	process.exit();
+}
+
 module.exports = function() {
 	this.provides('projectionDB', function() {
 		const firebaseConfig = {
@@ -15,8 +20,11 @@ module.exports = function() {
 		};
 		const app = firebase.initializeApp(firebaseConfig);
 		const db = app.database();
-		return app.auth().signInWithEmailAndPassword(process.env.EMAIL, process.env.PASSWORD).then(() => {
-			return db;
-		})
+
+		if (!process.env.EMAIL || !process.env.PASSWORD) handleDBError('No db password and login provided');
+
+		return app.auth().signInWithEmailAndPassword(process.env.EMAIL, process.env.PASSWORD)
+			.then(() => db)
+			.catch((err) => handleDBError(err.message));
 	});
 }
